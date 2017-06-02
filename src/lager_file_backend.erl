@@ -256,9 +256,9 @@ write(#state{name=Name, fd=FD, inode=Inode, flap=Flap, size=RotSize,
             do_write(State, Level, Msg)
     end.
 
-do_write(#state{fd=FD, name=Name, flap=Flap} = State, Level, Msg) ->
+do_write(#state{fd=FD, name=Name, flap=Flap} = State, Level, _Msg) ->
     %% delayed_write doesn't report errors
-    _ = file:write(FD, unicode:characters_to_binary(Msg)),
+    % _ = file:write(FD, unicode:characters_to_binary(Msg)),
     {mask, SyncLevel} = State#state.sync_on,
     case (Level band SyncLevel) /= 0 of
         true ->

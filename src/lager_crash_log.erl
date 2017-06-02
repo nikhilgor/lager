@@ -211,17 +211,18 @@ do_log({log, Event}, #state{name=Name, fd=FD, inode=Inode, flap=Flap,
                         lager_stdlib:maybe_utc(erlang:localtime())),
                     Time = [Date, " ", TS," =", ReportStr, "====\n"],
                     NodeSuffix = other_node_suffix(Pid),
-                    Msg = io_lib:format("~s~s~s", [Time, MsgStr, NodeSuffix]),
-                    case file:write(NewFD, unicode:characters_to_binary(Msg)) of
-                        {error, Reason} when Flap == false ->
-                            ?INT_LOG(error, "Failed to write log message to file ~s: ~s",
-                                [Name, file:format_error(Reason)]),
-                            {ok, State#state{fd=NewFD, inode=NewInode, flap=true}};
-                        ok ->
-                            {ok, State#state{fd=NewFD, inode=NewInode, flap=false}};
-                        _ ->
-                            {ok, State#state{fd=NewFD, inode=NewInode}}
-                    end;
+                    _Msg = io_lib:format("~s~s~s", [Time, MsgStr, NodeSuffix]),
+                    {ok, State#state{fd=NewFD, inode=NewInode, flap=false}};
+                    % case file:write(NewFD, unicode:characters_to_binary(Msg)) of
+                    %     {error, Reason} when Flap == false ->
+                    %         ?INT_LOG(error, "Failed to write log message to file ~s: ~s",
+                    %             [Name, file:format_error(Reason)]),
+                    %         {ok, State#state{fd=NewFD, inode=NewInode, flap=true}};
+                    %     ok ->
+                    %         {ok, State#state{fd=NewFD, inode=NewInode, flap=false}};
+                    %     _ ->
+                    %         {ok, State#state{fd=NewFD, inode=NewInode}}
+                    % end;
                 {error, Reason} ->
                     case Flap of
                         true ->
