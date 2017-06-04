@@ -461,7 +461,7 @@ check_trace(Attrs, {Filter, _Level, Dest}) when is_list(Filter) ->
 
 check_trace(Attrs, {Filter, _Level, Dest}) when is_tuple(Filter) ->
     Made = gre:make(Attrs, [list]),
-    glc:handle(?DEFAULT_TRACER, Made),
+    %glc:handle(?DEFAULT_TRACER, Made),
     Match = glc_lib:matches(Filter, Made),
     case Match of
 	true ->
