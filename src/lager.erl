@@ -103,26 +103,41 @@ dispatch_log(Sink, Severity, Metadata, Format, Args, Size, Safety) when is_atom(
 
 %% @private Should only be called externally from code generated from the parse transform
 do_log(Severity, Metadata, Format, Args, Size, SeverityAsInt, LevelThreshold, TraceFilters, Sink, SinkPid) when is_atom(Severity) ->
+    % io:format("do_log1"),
     FormatFun = fun() -> safe_format_chop(Format, Args, Size) end,
     do_log_impl(Severity, Metadata, Format, Args, SeverityAsInt, LevelThreshold, TraceFilters, Sink, SinkPid, FormatFun).
 
 do_log_impl(Severity, Metadata, Format, Args, SeverityAsInt, LevelThreshold, TraceFilters, Sink, SinkPid, FormatFun) ->
-    {Destinations, TraceSinkPid} = case TraceFilters of
+    T3 = os:timestamp(),
+    % io:format("do_log2"),
+    % {Destinations, TraceSinkPid} = {[], undefined},
+    {Destinations,TraceSinkPid} =
+    case TraceFilters of
         [] ->
             {[], undefined};
         _ ->
             {lager_util:check_traces(Metadata,SeverityAsInt,TraceFilters,[]), whereis(?TRACE_SINK)}
     end,
+    % io:format("trace ~p and input ~p ",[lager_util:check_traces(Metadata,SeverityAsInt,TraceFilters,[]),[Metadata,SeverityAsInt,TraceFilters]]),
+    T4 = os:timestamp(),
     case (LevelThreshold band SeverityAsInt) /= 0 orelse Destinations /= [] of
         true ->
+            T1 = os:timestamp(),
             Msg = case Args of
                 A when is_list(A) ->
                     FormatFun();
                 _ ->
                     Format
             end,
-            LagerMsg = lager_msg:new(Msg,
+            T2 = os:timestamp(),
+            Diff = timer:now_diff(T2,T1)/1000,
+            Diff2 = timer:now_diff(T4,T3)/1000,
+            Trace = case Destinations of [] -> 0; _ -> 12345 end,
+            Prefix = integer_to_list(trunc(Diff2)) ++ " " ++ integer_to_list(trunc(Diff)) ++ " " ++ integer_to_list(Trace) ++ " ",
+            % io:format("o ~p ~n",[Msg]),
+            LagerMsg = lager_msg:new(Prefix ++ Msg,
                 Severity, Metadata, Destinations),
+            % io:format("o ~p ~n",[LagerMsg]),
             case lager_config:get({Sink, async}, false) of
                 true ->
                     gen_event:notify(SinkPid, {log, LagerMsg});
@@ -156,6 +171,7 @@ dispatch_log(Severity, Metadata, Format, Args, Size) ->
 
 %% backwards compatible with beams compiled with lager 2.x
 do_log(Severity, Metadata, Format, Args, Size, SeverityAsInt, LevelThreshold, TraceFilters, SinkPid) ->
+    % io:format("do_log3"),
     do_log(Severity, Metadata, Format, Args, Size, SeverityAsInt,
            LevelThreshold, TraceFilters, ?DEFAULT_SINK, SinkPid).
 
